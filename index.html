@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Title of the document</title>
+  <script type="application/javascript">
+    var onLoad = (function () {
+      /**
+       * The WebGLRenderingContext used to access the webgl api
+       * and make calls to the graphics card.
+       *
+       * @type {WebGLRenderingContext}
+       */
+      var gl = null;
+
+      /**
+       * Access the WebGLRenderingContext from the canvas.
+       *
+       * @returns {WebGLRenderingContext}
+       */
+      function getWebGLRenderingContext() {
+        var canvas = document.getElementById('canvas');
+        try {
+          // The WebGLRenderingContext is the object used to access the webgl api.
+          return canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        } catch (error) {
+          console.error(error);
+        }
+        return null;
+      }
+
+      /**
+       * Sets up the WebGLRenderingContext for the applications scene.
+       *
+       * @param {WebGLRenderingContext} gl
+       * @returns {WebGLRenderingContext}
+       */
+      function setUp(gl) {
+        // Set clear color to black, fully opaque
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        // Enable depth testing
+        gl.enable(gl.DEPTH_TEST);
+        // Near things obscure far things
+        gl.depthFunc(gl.LEQUAL);
+        // Clear the color as well as the depth buffer.
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        return gl;
+      }
+
+      return function () {
+        gl = getWebGLRenderingContext();
+        if (gl) {
+          setUp(gl)
+        }
+      };
+    }());
+  </script>
+</head>
+<body onload="onLoad()">
+<canvas id="canvas" width="640" height="480"></canvas>
+</body>
+</html>
