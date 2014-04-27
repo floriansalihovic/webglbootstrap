@@ -132,6 +132,7 @@ var bootstrapWebGL = (function bootstrapWebGL() {
 
     try {
       // The WebGLRenderingContext is the object used to access the webgl api.
+      /** @type {WebGLRenderingContext} */
       var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
       // If the viewport dimensions are not set,
       gl.viewportWidth = canvas.width;
@@ -192,8 +193,6 @@ var bootstrapWebGL = (function bootstrapWebGL() {
         var shaderProgram = createProgram(gl, getShader(shaderIds));
         if (shaderProgram) {
           instructions.forEach(function (func) {
-            console.log(func.name);
-
             func.apply(null) // the module passed
                 .apply(null, [gl, shaderProgram]); // the 'run' function returned
           });
