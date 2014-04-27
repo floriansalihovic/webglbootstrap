@@ -318,3 +318,65 @@ The ```boostrap``` module will now be used in the ```index.html``` accordingly t
     </html>
 
 Our modified html page now uses our ```bootstrap``` module and everything which now missing is our application.
+
+## The first application
+
+    function example1() {
+
+      'use strict';
+
+      /**
+       * @param {WebGLRenderingContext} gl
+       * @returns {WebGLBuffer}
+       */
+      function createBuffer(gl) {
+        console.info(createBuffer.name);
+
+        var vertexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        var triangleVertices = [
+          0.0, 0.5, 0.0,
+          -0.5, -0.5, 0.0,
+          0.5, -0.5, 0.0
+        ];
+
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(triangleVertices), gl.STATIC_DRAW);
+        vertexBuffer.itemSize = 3;
+        vertexBuffer.numberOfItems = 3;
+
+        return vertexBuffer;
+      }
+
+      /**
+       * @param {WebGLRenderingContext} gl
+       * @param {WebGLProgram} shaderProgram
+       * @param {WebGLBuffer} vertexBuffer
+       * @returns {WebGLRenderingContext}
+       */
+      function draw(gl, shaderProgram, vertexBuffer) {
+        console.info(draw.name);
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+        gl.drawArrays(gl.TRIANGLES, 0, vertexBuffer.numberOfItems);
+
+        return gl;
+      }
+
+      /**
+       * @param {WebGLRenderingContext} gl
+       * @param {WebGLProgram} shaderProgram
+       * @param {Canvas} canvas
+       * @returns {WebGLRenderingContext}
+       */
+      return function (gl, shaderProgram, canvas) {
+        /** @type {WebGLBuffer} */
+        var vertexBuffer = createBuffer(gl);
+        draw(gl, shaderProgram, vertexBuffer);
+
+        return gl;
+      };
+    }
