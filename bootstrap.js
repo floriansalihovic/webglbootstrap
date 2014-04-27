@@ -95,13 +95,13 @@ var bootstrapWebGL = (function bootstrapWebGL() {
     var shaderProgram = gl.createProgram();
 
     // Compile the shader data into WebGLShader and attach it to the shaderProgram.
-    shaderData.map(function mapShaderData(data, index, array) {
+    shaderData.map(function (data, index, array) {
       var type = shaderTypes[data.type];
       if (type) {
         return compileShader(gl, type, data.source);
       }
       return null;
-    }).filter(function filterShaders(shader, index, array) {
+    }).filter(function (shader, index, array) {
       return null != shader;
     }).forEach(function (shader, index, array) {
       gl.attachShader(shaderProgram, shader);
@@ -123,8 +123,7 @@ var bootstrapWebGL = (function bootstrapWebGL() {
   }
 
   /**
-   * Access the WebGLRenderingContext from the canvas.
-   *
+   * @param {Canvas} canvas
    * @returns {WebGLRenderingContext}
    */
   function getContext(canvas) {
@@ -191,10 +190,10 @@ var bootstrapWebGL = (function bootstrapWebGL() {
          * @type {WebGLProgram}
          */
         var shaderProgram = createProgram(gl, getShader(shaderIds));
-        if (shaderProgram) {
+        if (shaderProgram && instructions) {
           instructions.forEach(function (func) {
             func.apply(null) // the module passed
-                .apply(null, [gl, shaderProgram]); // the 'run' function returned
+                .apply(null, [gl, shaderProgram, canvas]); // the 'run' function returned
           });
         } else {
           console.error('An error occurred when creating the WebGLProgram.');

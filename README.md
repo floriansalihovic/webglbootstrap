@@ -2,7 +2,7 @@
 
 Data visualizations were always my beloved since I am married to application development ... D3.js is so to say my adopted daughter ... with WebGL, I can finally escape the DOM. This post is heavily - almost copied - by the starter of [Mozilla's "Getting started with WebGL"](https://developer.mozilla.org/en-US/docs/Web/WebGL/Getting_started_with_WebGL) ... but I simply got frustrated because I am a too fast at yanking failing code into my editor. Also, there is no public repo and it might be a good excise to right it down in my own words and I might be able to avoid some global variables ...
 
-Please have an up2date browser because I write cutting edge code that relies on the world of tomorrow.
+Please have an up2date browser because we're going to write cutting edge code that relies on the world of [today](https://www.khronos.org/registry/webgl/specs/1.0/).
 
 ## Engage
 
@@ -20,129 +20,55 @@ When writing a WebGL application, we start with a basic HTML(5) template. We'll 
 </html>
 ```
 
-The first task is to create a WebGL context, which allows us to enter the realm of 3d graphics. We'll do that by provding a callback to the body's ```onload``` event handler. When the handler is invoked, the canvas element is created and we can try to access the gl context.
+Working with WebGL requires some basic work, with which we start first - working our way towards the first white triangle. The components required are
 
-```
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Title of the document</title>
-  <script type="application/javascript">
-    var onLoad = (function () {
-      /**
-       * The WebGLRenderingContext used to access the webgl api
-       * and make calls to the graphics card.
-       * 
-       * @type {WebGLRenderingContext}
-       */
-      var gl = null;
+- ```WebGLRenderingContext```
+- ```WebGLProgram```
+- ```WebGLShader```
 
-      /**
-       * Access the WebGLRenderingContext from the canvas.
-       *
-       * @returns {WebGLRenderingContext}
-       */
-      function getWebGLRenderingContext() {
-        var canvas = document.getElementById('canvas');
-        try {
-          // The WebGLRenderingContext is the object used to access the webgl api.
-          return canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-        } catch (error) {
-          console.error(error);
-        }
-        return null;
-      }
+For further information please consult the [specification](http://www.khronos.org/registry/webgl/specs/latest/1.0/).
 
-      return function () {
-        gl = getWebGLRenderingContext();
-      };
-    }());
-  </script>
-</head>
-<body onload="onLoad()">
-<canvas id="canvas" width="640" height="480"></canvas>
-</body>
-</html>
-```
-Here we have the first bits to access the [WebGLRenderingContext](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext). It is by convention usually named ```gl``` by convention (I rememeber it when I used JoGL a couple of years ago).
+Accessing the WebGLRenderingContext is crucial since it provides access to the WebGL api. This the first basic task to accomplish.
 
-So, what did I do? In an anonymous function I declared a field which will be referenced asynchronously in the closure which is the actual return value of the callback we provide. The canvas element will be available in some time later after the function was invoked, so saving a little work for later is not optional, but required. The function ```getWebGLRenderingContext``` will access the context if available - if not ... we're screwed (please check the canvas' id, flood the code with logs to check if the methods are called and use your browsers debugging facilities to find to error ...).
-
-When no error is thrown, the first steps to set up the scene can be done.
-
-```
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Title of the document</title>
-  <script type="application/javascript">
-    var onLoad = (function () {
-      /**
-       * The WebGLRenderingContext used to access the webgl api
-       * and make calls to the graphics card.
-       *
-       * @type {WebGLRenderingContext}
-       */
-      var gl = null;
-
-      /**
-       * Access the WebGLRenderingContext from the canvas.
-       *
-       * @returns {WebGLRenderingContext}
-       */
-      function getWebGLRenderingContext() {
-        var canvas = document.getElementById('canvas');
-        try {
-          // The WebGLRenderingContext is the object used to access the webgl api.
-          return canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-        } catch (error) {
-          console.error(error);
-        }
-        return null;
-      }
-
-      /**
-       * Sets up the WebGLRenderingContext for the applications scene.
-       *
-       * @param {WebGLRenderingContext} gl
-       * @returns {WebGLRenderingContext}
-       */
-      function setUp(gl) {
-        // Set clear color to black, fully opaque.
-        gl.clearColor(0.0, 0.0, 0.0, 1.0);
-        // Enable depth testing.
-        gl.enable(gl.DEPTH_TEST);
-        // Near things obscure far things.
-        gl.depthFunc(gl.LEQUAL);
-        // Clear the color as well as the depth buffer.
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    /**
+     * @param {Canvas} canvas
+     * @returns {WebGLRenderingContext}
+     */
+    function getContext(canvas) {
+      console.info(getContext.name);
+  
+      try {
+        // The WebGLRenderingContext is the object used to access the webgl api.
+        /** @type {WebGLRenderingContext} */
+        var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        // If the viewport dimensions are not set,
+        gl.viewportWidth = canvas.width;
+        gl.viewportHeight = canvas.height;
+  
         return gl;
+      } catch (error) {
+        console.error(error);
       }
+  
+      return null;
+    }
 
-      return function () {
-        gl = getWebGLRenderingContext();
-        if (gl) {
-          setUp(gl)
-        }
-      };
-    }());
-  </script>
-</head>
-<body onload="onLoad()">
-<canvas id="canvas" width="640" height="480"></canvas>
-</body>
-</html>
-```
-When executing the code, a black rectangle shoud appear on the screen. That's basically the proof that we're really running modern hardware and WebGL is working. I just want to stress at the moment, that we're working within the anonymous function - there will be no global variables introduced and we'll keep access to variables as restricted as possible ...
+The function expects a ```Canvas``` element and tries to access the WebGLRenderingContext via ```webgl``` or ```experimental-webgl``` as a fallback. By the time of writing, i expect the fallback to be obsolete when running an up to date browser. Import is setting the viewport dimensions, when the context could be entered. Otherwise a black screen may be the result.
 
-## Shaders and programs ...
+This gives us the entry point. WebGL requires a lot more configuration though. WebGL requires some levels of computation to transform data to pixels. This a very basic reference to the rendering pipeline. The rendering pipeline will get a discourse with a higher degree of detail on its own ...
 
-Shaders and programs are necessary for rendering. As the Khonos group states
+## Shader
 
-> ### 5.14.9 Programs and Shaders
-> Rendering with OpenGL ES 2.0 requires the use of shaders, written in OpenGL ES's shading language,  GLSL ES. Shaders will be loaded from a source string (shaderSource), compiled (compileShader) and attached to a program (attachShader) which must be linked (linkProgram) and then used (useProgram).
+In short: Shader are used to produce pixels. A slightly longer descriptions would be. There are two kinds of shaders in WebGL: VertextShader and PixelShader. Shaders themselves a small programms by their own, which need to be loaded and compiled in order to get used. In most examples shaders are small scripts held in the dom with secific type attributes, an approach which we'll follow. The vertex shader, which is the first shader applied in the rendering pipeline:
 
-Starting by adding the shaders to the document's dom.
+    <script id="shader-vs" type="x-shader/x-vertex">
+      attribute vec3 aVertexPosition;
+      void main() {
+        gl_Position = vec4(aVertexPosition, 1.0);
+      }
+    </script>
+
+The vertex shader will be called on each vertice and calculate the native positions. The following fragment shader will calculate the pixel data which is needed to create the actual image rendered.
 
     <script id="shader-fs" type="x-shader/x-fragment">
       void main(void) {
@@ -150,85 +76,245 @@ Starting by adding the shaders to the document's dom.
       }
     </script>
 
-And the code for the vertex shader.
+I'm still not used to shaders but it is obvious that the value of ```gl_frageColor``` is white for every fragement of the screen. Those shaders need to be loaded/transformed into useful data. I think a small function like the following should be sufficient for our needs.
 
-    <script id="shader-vs" type="x-shader/x-vertex">
-      attribute vec3 aVertexPosition;
+    /**
+     * @param {Array} ids
+     * @returns {Array} the compiled shaders
+     */
+    function getShader(ids) {
+      console.info(getShader.name);
+  
+      var shaderTypes = [
+        'x-shader/x-fragment',
+        'x-shader/x-vertex'
+      ];
+  
+      return ids.map(function (id) {
+        var script = document.getElementById(id);
+        if (script && (-1 < shaderTypes.indexOf(script.type))) {
+          var child = script.firstChild;
+  
+          if (child.nodeType == child.TEXT_NODE) {
+            return {
+              id: id,
+              type: script.type,
+              source: child.textContent
+            };
+          }
+        }
+        return null;
+      }).filter(function (shaderData) {
+        return shaderData && shaderData.type;
+      });
+    }
 
-      uniform mat4 uMVMatrix;
-      uniform mat4 uPMatrix;
+The function is - hopefully - quite self explanatory. Passing an array of node ids will return an array of object containing three properties. The id is basically the identifier used for debugging purposes, the type will be actually used later to identify the shader as vertex or fragement shader and the source will be compiled.
 
-      void main(void) {
-        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
-      }
-    </script>
+Compiling the shader will be done in an extra function - mainly because we could attempt to compile any string, not just text node from the dom. The function displays the importance of the WebGLRenderingContext by providing a shader instance and compiling it.
 
-The application module:
-
-    var instructions = [function example1() {
-
-      'use strict';
-
+    /**
+     * @param {WebGLRenderingContext} gl
+     * @param {number} type The type of the shader.
+     *        The value must be either WebGLRenderingContext.VERTEX_SHADER
+     *        or WebGLRenderingContext.FRAGMENT_SHADER.
+     * @param {string} source The source string of the shader. This will be
+     *        compiled.
+     * @return {WebGLShader}
+     */
+    function compileShader(gl, type, source) {
+      console.info(compileShader.name, type);
+  
       /**
-       * @param {WebGLRenderingContext} gl
-       * @returns {WebGLBuffer}
+       * @const
+       * @type {WebGLShader}
        */
-      function createBuffer(gl) {
-        console.info(createBuffer.name);
-
-        var vertexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-        var triangleVertices = [
-          0.0, 0.5, 0.0,
-          -0.5, -0.5, 0.0,
-          0.5, -0.5, 0.0
-        ];
-
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(triangleVertices), gl.STATIC_DRAW);
-        vertexBuffer.itemSize = 3;
-        vertexBuffer.numberOfItems = 3;
-
-        return vertexBuffer;
+      var shader = gl.createShader(type);
+  
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+  
+      if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        return shader;
+      } else {
+        console.error(gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
       }
+  
+      return null;
+    }
 
-      /**
-       * @param {WebGLRenderingContext} gl
-       * @param {WebGLProgram} shaderProgram
-       * @param {WebGLBuffer} vertexBuffer
-       * @returns {WebGLRenderingContext}
-       */
-      function draw(gl, shaderProgram, vertexBuffer) {
-        console.info(draw.name);
+The function expects three arguments. The WebGLRenderingContext, a type which needs be the value of ```WebGLRenderingContext.VERTEX_SHADER``` or ```WebGLRenderingContext.FRAGMENT_SHADER```. The source is the actual source code of the shader (a plain old string). The use the shader, these have to be applied to a ```
+WebGLProgram``` as displayed by the following function.
 
-        gl.clearColor(0.0, 0.0, 0.0, 1.0);
-        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
-        gl.drawArrays(gl.TRIANGLES, 0, vertexBuffer.numberOfItems);
-
-        return gl;
+    /**
+     * @param {WebGLRenderingContext} gl
+     * @param {Array} shaderData
+     * @returns {WebGLProgram}
+     */
+    function createProgram(gl, shaderData) {
+      console.info(createProgram.name);
+  
+      // When shaderData contains no data, exit - otherwise runtime errors will occur.
+      if (!shaderData.length) {
+        return null;
       }
-
+  
       /**
-       * @param {WebGLRenderingContext} gl
-       * @param {WebGLProgram} shaderProgram
-       * @param {Canvas} canvas
-       * @returns {WebGLRenderingContext}
+       * The shader types expected.
+       * @const
+       * @enum {number}
        */
-      return function (gl, shaderProgram, canvas) {
-        /** @type {WebGLBuffer} */
-        var vertexBuffer = createBuffer(gl);
-        draw(gl, shaderProgram, vertexBuffer);
-
-        return gl;
+      var shaderTypes = {
+        "x-shader/x-fragment": gl.FRAGMENT_SHADER,
+        "x-shader/x-vertex": gl.VERTEX_SHADER
       };
-    }];
+  
+      /**
+       * The program object.
+       * @const
+       * @type {WebGLProgram}
+       */
+      var shaderProgram = gl.createProgram();
+  
+      // Compile the shader data into WebGLShader and attach it to the shaderProgram.
+      shaderData.map(function (data, index, array) {
+        var type = shaderTypes[data.type];
+        if (type) {
+          return compileShader(gl, type, data.source);
+        }
+        return null;
+      }).filter(function (shader, index, array) {
+        return null != shader;
+      }).forEach(function (shader, index, array) {
+        gl.attachShader(shaderProgram, shader);
+      });
+  
+      gl.linkProgram(shaderProgram);
+  
+      // If creating the shader program failed, alert
+      if (gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+        gl.useProgram(shaderProgram);
+        /** @const */
+        var vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+        gl.enableVertexAttribArray(vertexPositionAttribute);
+      } else {
+        console.error('Unable to initialize the shader program.');
+      }
+  
+      return shaderProgram;
+    }
 
-The module will be passed in the instructions array to the bootstrap module straight forward.
+The function takes two arguments. The WebGLRenderingContext and the set of shaders we loaded. The programm (```WebGLProgramm```) is created by the context and the shaders, which get compiled from the sources are attached. After the programm was linked and the status returns ```true```, the program is used.
 
+```todo``` what does
+
+    var vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+    gl.enableVertexAttribArray(vertexPositionAttribute);
+
+The ```WebGLRenderingcContext``` will be configured with a small function.
+
+    /**
+     * @param {WebGLRenderingContext} gl
+     * @returns {WebGLRenderingContext}
+     */
+    function setContext(gl) {
+      console.info(setContext.name);
+
+      // Set clear color to black, fully opaque.
+      gl.clearColor(0.0, 0.0, 0.0, 1.0);
+      // Enable depth testing.
+      gl.enable(gl.DEPTH_TEST);
+      // Near things obscure far things.
+      gl.depthFunc(gl.LEQUAL);
+      // Clear the color as well as the depth buffer.
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      return gl;
+    }
+
+The code is one of the more simple pieces of WebGL code - pretty self explanatory I guess. We now have everything in place for our own small WebGL bootstrap module.
+
+    var bootstrapWebGL = (function bootstrapWebGL() {
+    
+      "use strict";
+    
+      function getShader(ids) { /* {...} */ }
+    
+      function compileShader(gl, type, source) { /* {...} */ }
+    
+      function createProgram(gl, shaderData) { /* {...} */ }
+    
+      function getContext(canvas) { /* {...} */ }
+    
+      function setContext(gl) { /* {...} */ }
+    
+      /**
+       * @type {function}
+       * @param {string} canvasId
+       * @param {Array} shaderIds
+       * @param {Array} instructions
+       */
+      return function bootstrap(canvasId, shaderIds, instructions) {
+        console.info(bootstrap.name);
+    
+        /**
+         * @const
+         * @type {Canvas}
+         */
+        var canvas = document.getElementById(canvasId);
+        if (canvas) {
+          /**
+           * @const
+           * @type {WebGLRenderingContext} */
+          var gl = setContext(getContext(canvas));
+          if (gl) {
+            /**
+             * @const
+             * @type {WebGLProgram}
+             */
+            var shaderProgram = createProgram(gl, getShader(shaderIds));
+            if (shaderProgram && instructions) {
+              instructions.forEach(function (func) {
+                func.apply(null) // the module passed
+                    .apply(null, [gl, shaderProgram, canvas]); // the 'run' function returned
+              });
+            } else {
+              console.error('An error occurred when creating the WebGLProgram.');
+            }
+          }
+        } else {
+          console.error('Could not resolve canvas with id %s.', canvasId);
+        }
+      };
+    }());
+
+The module is used to simplify the life of the ambitioned WebGL practioner. The ```canvasId``` and ```shaderIds``` hold references to ... nodes via ids. The ```instructions``` are contains modules which are - ultimately our application. The modules will get the necessary data by the boostrap module.
+
+The ```boostrap``` module will now be used in the ```index.html``` accordingly to set up the stage for the common "Hello world." application of WebGL.
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Title of the document</title>
+      <script src="bootstrap.js"></script>
+      <script id="shader-fs" type="x-shader/x-fragment">
+        void main(void) {
+          gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        }
+      </script>
+      <script id="shader-vs" type="x-shader/x-vertex">
+        attribute vec3 aVertexPosition;
+        void main() {
+          gl_Position = vec4(aVertexPosition, 1.0);
+        }
+      </script>
+      <script type="application/javascript">
+        var instructions = [];
+      </script>
+    </head>
     <body onload="bootstrapWebGL('canvas', ['shader-fs', 'shader-vs'], instructions)">
-      <canvas id="canvas" width="640" height="480"></canvas>
+    <canvas id="canvas" width="640" height="480"></canvas>
     </body>
+    </html>
 
-The complete code is available in the public github repository.
+Our modified html page now uses our ```bootstrap``` module and everything which now missing is our application.
