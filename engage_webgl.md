@@ -108,11 +108,11 @@ When no error is thrown, the first steps to set up the scene can be done.
        * @returns {WebGLRenderingContext}
        */
       function setUp(gl) {
-        // Set clear color to black, fully opaque
+        // Set clear color to black, fully opaque.
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
-        // Enable depth testing
+        // Enable depth testing.
         gl.enable(gl.DEPTH_TEST);
-        // Near things obscure far things
+        // Near things obscure far things.
         gl.depthFunc(gl.LEQUAL);
         // Clear the color as well as the depth buffer.
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -134,3 +134,94 @@ When no error is thrown, the first steps to set up the scene can be done.
 </html>
 ```
 When executing the code, a black rectangle shoud appear on the screen. That's basically the proof that we're really running modern hardware and WebGL is working. I just want to stress at the moment, that we're working within the anonymous function - there will be no global variables introduced and we'll keep access to variables as restricted as possible ...
+
+## Shaders and programs ...
+
+Shaders and programs are necessary for rendering. As the Khonos group states
+
+> ### 5.14.9 Programs and Shaders
+> Rendering with OpenGL ES 2.0 requires the use of shaders, written in OpenGL ES's shading language,  GLSL ES. Shaders will be loaded from a source string (shaderSource), compiled (compileShader) and attached to a program (attachShader) which must be linked (linkProgram) and then used (useProgram).
+
+Starting by adding the shaders to the document's dom.
+
+    <script id="shader-fs" type="x-shader/x-fragment">
+      void main(void) {
+        gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+      }
+    </script>
+
+And the code for the vertex shader.
+
+    <script id="shader-vs" type="x-shader/x-vertex">
+      attribute vec3 aVertexPosition;
+
+      uniform mat4 uMVMatrix;
+      uniform mat4 uPMatrix;
+
+      void main(void) {
+        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+      }
+    </script>
+
+The application module:
+
+    var instructions = [function example1() {
+
+      'use strict';
+
+      /**
+       * @param {WebGLRenderingContext} gl
+       * @returns {WebGLBuffer}
+       */
+      function createBuffer(gl) {
+        console.info(createBuffer.name);
+
+        var vertexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        var triangleVertices = [
+          0.0, 0.5, 0.0,
+          -0.5, -0.5, 0.0,
+          0.5, -0.5, 0.0
+        ];
+
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(triangleVertices), gl.STATIC_DRAW);
+        vertexBuffer.itemSize = 3;
+        vertexBuffer.numberOfItems = 3;
+
+        return vertexBuffer;
+      }
+
+      /**
+       * @param {WebGLRenderingContext} gl
+       * @param {WebGLProgram} shaderProgram
+       * @param {WebGLBuffer} vertexBuffer
+       * @returns {WebGLRenderingContext}
+       */
+      function draw(gl, shaderProgram, vertexBuffer) {
+        console.info(draw.name);
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+        gl.drawArrays(gl.TRIANGLES, 0, vertexBuffer.numberOfItems);
+
+        return gl;
+      }
+
+      /**
+       * @param {WebGLRenderingContext} gl
+       * @param {WebGLProgram} shaderProgram
+       * @param {Canvas} canvas
+       * @returns {WebGLRenderingContext}
+       */
+      return function (gl, shaderProgram, canvas) {
+        /** @type {WebGLBuffer} */
+        var vertexBuffer = createBuffer(gl);
+        draw(gl, shaderProgram, vertexBuffer);
+
+        return gl;
+      };
+    }];
+
