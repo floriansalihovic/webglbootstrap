@@ -225,3 +225,10 @@ The application module:
       };
     }];
 
+The module will be passed in the instructions array to the bootstrap module straight forward.
+
+    <body onload="bootstrapWebGL('canvas', ['shader-fs', 'shader-vs'], instructions)">
+      <canvas id="canvas" width="640" height="480"></canvas>
+    </body>
+
+The complete code is available in the public github repository.
