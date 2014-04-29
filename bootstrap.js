@@ -133,9 +133,13 @@ var bootstrapWebGL = (function bootstrapWebGL() {
       // The WebGLRenderingContext is the object used to access the webgl api.
       /** @type {WebGLRenderingContext} */
       var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-      // If the viewport dimensions are not set,
       gl.viewportWidth = canvas.width;
       gl.viewportHeight = canvas.height;
+
+      gl.clearColor(0.0, 0.0, 0.0, 1.0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      // If the viewport dimensions are not set,
+      gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 
       return gl;
     } catch (error) {
