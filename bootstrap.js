@@ -1,4 +1,4 @@
-var bootstrapWebGL = (function bootstrapWebGL() {
+var webGLBootstrap = (function webGLBootstrap() {
 
   "use strict";
 
