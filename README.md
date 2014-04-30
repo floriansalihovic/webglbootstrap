@@ -220,7 +220,13 @@ The ```WebGLRenderingcContext``` will be configured with a small function.
      */
     function setContext(gl) {
       console.info(setContext.name);
-
+  
+      // Setting the color when the color buffer is cleared.
+      gl.clearColor(0.0, 0.0, 0.0, 1.0);
+      // Clearing the color buffer.
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      // If the viewport dimensions are not set, nothing will be displayed.
+      gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
       // Set clear color to black, fully opaque.
       gl.clearColor(0.0, 0.0, 0.0, 1.0);
       // Enable depth testing.
@@ -231,6 +237,7 @@ The ```WebGLRenderingcContext``` will be configured with a small function.
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       return gl;
     }
+
 
 The code is one of the more simple pieces of WebGL code - pretty self explanatory I guess. We now have everything in place for our own small WebGL bootstrap module.
 
@@ -265,7 +272,8 @@ The code is one of the more simple pieces of WebGL code - pretty self explanator
         if (canvas) {
           /**
            * @const
-           * @type {WebGLRenderingContext} */
+           * @type {WebGLRenderingContext}
+           */
           var gl = setContext(getContext(canvas));
           if (gl) {
             /**
@@ -321,6 +329,8 @@ Our modified html page now uses our ```bootstrap``` module and everything which 
 
 ## The first application
 
+The first application is basically a proof of concept, that everything is properly set up.
+
     function example1() {
 
       'use strict';
@@ -356,9 +366,6 @@ Our modified html page now uses our ```bootstrap``` module and everything which 
       function draw(gl, shaderProgram, vertexBuffer) {
         console.info(draw.name);
 
-        gl.clearColor(0.0, 0.0, 0.0, 1.0);
-        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-        gl.clear(gl.COLOR_BUFFER_BIT);
         gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
         gl.drawArrays(gl.TRIANGLES, 0, vertexBuffer.numberOfItems);
@@ -380,3 +387,9 @@ Our modified html page now uses our ```bootstrap``` module and everything which 
         return gl;
       };
     }
+
+By placing the function in the ```instructions``` array of our script example1, a white triangle will be displayed.
+
+## Colors - a science of its own.
+
+WebGL is a complete shader based language. That is great - since shaders provide a level of indirection towards the actual output of our programs. That being said, a shader is also needed to

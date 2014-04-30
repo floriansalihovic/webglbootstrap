@@ -112,9 +112,6 @@ var webGLBootstrap = (function webGLBootstrap() {
     // If creating the shader program failed, alert
     if (gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
       gl.useProgram(shaderProgram);
-      /** @const */
-      var vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
-      gl.enableVertexAttribArray(vertexPositionAttribute);
     } else {
       console.error('Unable to initialize the shader program.');
     }
@@ -136,11 +133,6 @@ var webGLBootstrap = (function webGLBootstrap() {
       gl.viewportWidth = canvas.width;
       gl.viewportHeight = canvas.height;
 
-      gl.clearColor(0.0, 0.0, 0.0, 1.0);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      // If the viewport dimensions are not set,
-      gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-
       return gl;
     } catch (error) {
       console.error(error);
@@ -158,6 +150,12 @@ var webGLBootstrap = (function webGLBootstrap() {
   function setContext(gl) {
     console.info(setContext.name);
 
+    // Setting the color when the color buffer is cleared.
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    // Clearing the color buffer.
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    // If the viewport dimensions are not set, nothing will be displayed.
+    gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     // Set clear color to black, fully opaque.
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     // Enable depth testing.
@@ -166,6 +164,7 @@ var webGLBootstrap = (function webGLBootstrap() {
     gl.depthFunc(gl.LEQUAL);
     // Clear the color as well as the depth buffer.
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
     return gl;
   }
 

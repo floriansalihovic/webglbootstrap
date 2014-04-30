@@ -2,19 +2,35 @@
 <html>
 <head>
   <title>Title of the document</title>
+
   <script src="bootstrap.js"></script>
-  <script id="shader-fs" type="x-shader/x-fragment">
-    void main(void) {
-      gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-    }
-  </script>
+
   <script id="shader-vs" type="x-shader/x-vertex">
     attribute vec3 aVertexPosition;
-    void main() {
-      gl_Position = vec4(aVertexPosition, 1.0);
+    attribute vec4 aVertexColor;
+
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+
+    varying vec4 vColor;
+
+    void main(void) {
+      gl_Position = vec4(aVertexPosition, 1);
+      vColor = aVertexColor;
     }
   </script>
-  <script type="application/javascript">
+
+  <script id="shader-fs" type="x-shader/x-fragment">
+    precision mediump float;
+
+    varying vec4 vColor;
+
+    void main(void) {
+      gl_FragColor = vColor;
+    }
+  </script>
+
+  <script id="example1" type="application/javascript">
     var instructions = [function example1() {
 
       'use strict';
@@ -23,36 +39,70 @@
        * @param {WebGLRenderingContext} gl
        * @returns {WebGLBuffer}
        */
-      function createBuffer(gl) {
-        console.info(createBuffer.name);
+      function createVertexBuffer(gl, shaderProgram) {
+        console.info(createVertexBuffer.name);
 
-        var vertexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-        var triangleVertices = [
-          0.0, 0.5, 0.0,
-          -0.5, -0.5, 0.0,
-          0.5, -0.5, 0.0
-        ];
+        var buffer = gl.createBuffer();
+        buffer.itemSize = 3;
+        buffer.numberOfItems = 3;
 
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(triangleVertices), gl.STATIC_DRAW);
-        vertexBuffer.itemSize = 3;
-        vertexBuffer.numberOfItems = 3;
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER,
+            new Float32Array([
+               0.0,  0.5, 0.0, // v1 (x1, y1, z1)
+              -0.5, -0.5, 0.0, // v2 (x2, y2, z2)
+               0.5, -0.5, 0.0  // v3 (x3, y3, z3)
+            ]), gl.STATIC_DRAW);
 
-        return vertexBuffer;
+        var location = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.enableVertexAttribArray(location);
+        gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
+
+        return buffer;
+      }
+
+      /**
+       * @param {WebGLRenderingContext} gl
+       * @param {WebGLProgram} shaderProgram
+       * @returns {WebGLBuffer}
+       */
+      function createColorBuffer(gl, shaderProgram) {
+        console.info(createColorBuffer.name);
+
+        var buffer = gl.createBuffer();
+        buffer.itemSize = 4;
+        buffer.numberOfItems = 3;
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER,
+            new Float32Array([
+              1.0, 0.0, 0.0, 1.0, // v1(r1,g1,b1,a1)
+              0.0, 1.0, 0.0, 1.0, // v2(r2,g2,b2,a2)
+              0.0, 0.0, 1.0, 1.0  // v3(r3,g3,b3,a3)
+            ]), gl.STATIC_DRAW);
+
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+
+        var location = gl.getAttribLocation(shaderProgram, "aVertexColor");
+        gl.enableVertexAttribArray(location);
+        gl.vertexAttribPointer(location, 4, gl.FLOAT, false, 0, 0);
+
+        return buffer;
       }
 
       /**
        * @param {WebGLRenderingContext} gl
        * @param {WebGLProgram} shaderProgram
        * @param {WebGLBuffer} vertexBuffer
+       * @param {WebGLBuffer} colorBuffer
        * @returns {WebGLRenderingContext}
        */
-      function draw(gl, shaderProgram, vertexBuffer) {
+      function draw(gl) {
         console.info(draw.name);
 
-        gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
-        gl.drawArrays(gl.TRIANGLES, 0, vertexBuffer.numberOfItems);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
 
         return gl;
       }
@@ -65,8 +115,10 @@
        */
       return function (gl, shaderProgram, canvas) {
         /** @type {WebGLBuffer} */
-        var vertexBuffer = createBuffer(gl);
-        draw(gl, shaderProgram, vertexBuffer);
+        var vertexBuffer = createVertexBuffer(gl, shaderProgram);
+        var colorBuffer = createColorBuffer(gl, shaderProgram);
+
+        draw(gl);
 
         return gl;
       };
