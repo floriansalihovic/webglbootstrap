@@ -8,17 +8,16 @@ Please have an up2date browser because we're going to write cutting edge code th
 
 When writing a WebGL application, we start with a basic HTML(5) template. We'll draw into a ```<canvas/>``` element, so, that should be present. The following piece of HTML can be copy/pasted into a new html file and will display nothing on the screen.
 
-```
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Data - Make it so ...</title>
-</head>
-<body>
-<canvas id="canvas" width="640" height="480"></canvas>
-</body>
-</html>
-```
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Data - Make it so ...</title>
+    </head>
+    <body>
+    <canvas id="canvas" width="640" height="480"></canvas>
+    </body>
+    </html>
+
 
 Working with WebGL requires some basic work, with which we start first - working our way towards the first white triangle. The components required are
 
@@ -392,4 +391,221 @@ By placing the function in the ```instructions``` array of our script example1, 
 
 ## Colors - a science of its own.
 
-WebGL is a complete shader based language. That is great - since shaders provide a level of indirection towards the actual output of our programs. That being said, a shader is also needed to
+WebGL is a complete shader based language. That is great - since shaders provide a level of indirection towards
+the actual output of our programs. That being said, a shader is also needed to display anything in the screen. To be
+able to provide something more appealing then a white triangle, let's say a colorful triangle, adjustig the shaders is
+needed. Also, since colors are presented as vectors just as positions are, using buffers for color storage is task as
+well. The following code provides a vertex shader. It is a modified version from what we already have and also modified
+from what I saw so far in web tutorials.
+
+    <script id="shader-vs" type="x-shader/x-vertex">
+      attribute vec3 aVertexPosition;
+      attribute vec4 aVertexColor;
+
+      uniform mat4 uMVMatrix;
+      uniform mat4 uPMatrix;
+
+      varying vec4 vColor;
+
+      void main(void) {
+        gl_Position = vec4(aVertexPosition, 1);
+        vColor = aVertexColor;
+      }
+    </script>
+
+The fragment shader looks quite similar to what we have, not too many things have changed.
+
+    <script id="shader-fs" type="x-shader/x-fragment">
+      precision mediump float;
+
+      varying vec4 vColor;
+
+      void main(void) {
+        gl_FragColor = vColor;
+      }
+    </script>
+
+The main difference is, that we reference a variable ```vColor``` instead a constant vector carrying the values for
+```white```. In order to access a color spectrum, a second buffer has to be created. The following code illustrates
+the method:
+
+      /**
+       * @param {WebGLRenderingContext} gl
+       * @param {WebGLProgram} shaderProgram
+       * @returns {WebGLBuffer}
+       */
+      function createColorBuffer(gl, shaderProgram) {
+        console.info(createColorBuffer.name);
+
+        var buffer = gl.createBuffer(),
+            size = 4;
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER,
+            new Float32Array([
+              1.0, 0.0, 0.0, 1.0, // v1 (r1,g1,b1,a1)
+              0.0, 1.0, 0.0, 1.0, // v2 (r2,g2,b2,a2)
+              0.0, 0.0, 1.0, 1.0  // v3 (r3,g3,b3,a3)
+            ]), gl.STATIC_DRAW);
+
+
+        var location = gl.getAttribLocation(shaderProgram, "aVertexColor");
+        gl.enableVertexAttribArray(location);
+        gl.vertexAttribPointer(location, size, gl.FLOAT, false, 0, 0);
+
+        return buffer;
+      }
+
+This method looks a lot like the method implemented to create the data for triangle. By generalizing the method, we can
+utilize it to create the vertex and the color data.
+
+    /**
+     * @param {WebGLRenderingContext} gl
+     * @param {WebGLProgram} shaderProgram
+     * @param {Array} vectors
+     * @param {int} size
+     * @param {string} attribLocation
+     * @returns {WebGLBuffer}
+     */
+    function createBuffer(gl, shaderProgram, vectors, size, attribLocation) {
+      console.info(createColorBuffer.name);
+
+      var buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vectors), gl.STATIC_DRAW);
+
+      var location = gl.getAttribLocation(shaderProgram, attribLocation);
+      gl.enableVertexAttribArray(location);
+      gl.vertexAttribPointer(location, size, gl.FLOAT, false, 0, 0);
+
+      return buffer;
+    }
+
+
+To keep things a little more readable at first, decorating this generic method with two methods. One for the vertices
+and one for the colors:
+
+    /**
+     * @param {WebGLRenderingContext}
+     * @param {WebGLProgram}
+     * @return {WebGLRenderingContext}
+     */
+    function createVertexBuffer(gl, shaderProgram) {
+      console.info(createVertexBuffer.name);
+
+      var vertices = [
+        0.0, 0.5, 0.0,    // v1 (x1, y1, z1)
+        -0.5, -0.5, 0.0,  // v2 (x2, y2, z2)
+        0.5, -0.5, 0.0    // v3 (x3, y3, z3)
+      ];
+
+      return createBuffer(gl, shaderProgram, vertices, 3, "aVertexPosition");
+    }
+
+    /**
+     * @param {WebGLRenderingContext}
+     * @param {WebGLProgram}
+     * @return {WebGLRenderingContext}
+     */
+    function createColorBuffer(gl, shaderProgram) {
+      console.info(createColorBuffer.name);
+
+      var colors = [
+        1.0, 0.0, 0.0, 1.0, // v1 (r1,g1,b1,a1)
+        0.0, 1.0, 0.0, 1.0, // v2 (r2,g2,b2,a2)
+        0.0, 0.0, 1.0, 1.0  // v3 (r3,g3,b3,a3)
+      ];
+
+      return createBuffer(gl, shaderProgram, colors, 4, "aVertexColor");
+    }
+
+This is our refactored code, a bit more modular and better to handle. The complete code for our example rendering a
+colored triangle
+
+    function example1() {
+
+      'use strict';
+
+      /**
+       * @param {WebGLRenderingContext} gl
+       * @param {WebGLProgram} shaderProgram
+       * @param {Array} vectors
+       * @param {int} size
+       * @param {string} attribLocation
+       * @returns {WebGLBuffer}
+       */
+      function createBuffer(gl, shaderProgram, vectors, size, attribLocation) {
+        console.info(createColorBuffer.name);
+
+        var buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vectors), gl.STATIC_DRAW);
+
+        var location = gl.getAttribLocation(shaderProgram, attribLocation);
+        gl.enableVertexAttribArray(location);
+        gl.vertexAttribPointer(location, size, gl.FLOAT, false, 0, 0);
+
+        return buffer;
+      }
+
+      /**
+       * @param {WebGLRenderingContext} gl
+       * @param {WebGLProgram} shaderProgram
+       * @return {WebGLBuffer} the WebGLBuffer created.
+       */
+      function createVertexBuffer(gl, shaderProgram) {
+        console.info(createVertexBuffer.name);
+
+        var vertices = [
+          0.0, 0.5, 0.0,    // v1 (x1, y1, z1)
+          -0.5, -0.5, 0.0,  // v2 (x2, y2, z2)
+          0.5, -0.5, 0.0    // v3 (x3, y3, z3)
+        ];
+
+        return createBuffer(gl, shaderProgram, vertices, 3, "aVertexPosition");
+      }
+
+      /**
+       * @param {WebGLRenderingContext} gl
+       * @param {WebGLProgram} shaderProgram
+       * @return {WebGLBuffer} the WebGLBuffer created.
+       */
+      function createColorBuffer(gl, shaderProgram) {
+        console.info(createColorBuffer.name);
+
+        var colors = [
+          1.0, 0.0, 0.0, 1.0, // v1 (r1,g1,b1,a1)
+          0.0, 1.0, 0.0, 1.0, // v2 (r2,g2,b2,a2)
+          0.0, 0.0, 1.0, 1.0  // v3 (r3,g3,b3,a3)
+        ];
+
+        return createBuffer(gl, shaderProgram, colors, 4, "aVertexColor");
+      }
+
+      /**
+       * @param {WebGLRenderingContext} gl
+       * @returns {WebGLRenderingContext} used.
+       */
+      function render(gl, shaderProgram) {
+        console.info(render.name);
+
+        gl.drawArrays(gl.TRIANGLES, 0, 3); // Draws the triangle from the bound buffers, three vertices in sum.
+
+        return gl;
+      }
+
+      /**
+       * @param {WebGLRenderingContext} gl
+       * @param {WebGLProgram} shaderProgram
+       * @param {Canvas} canvas
+       * @returns {WebGLRenderingContext}
+       */
+      return function (gl, shaderProgram, canvas) {
+        createVertexBuffer(gl, shaderProgram); // procedural state management of the buffers
+        createColorBuffer(gl, shaderProgram); // procedural state management of the buffers
+
+        render(gl); // simple render instruction
+
+        return gl;
+      };
+    }

@@ -152,18 +152,14 @@ var webGLBootstrap = (function webGLBootstrap() {
 
     // Setting the color when the color buffer is cleared.
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    // Clearing the color buffer.
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    // Clear the color as well as the depth buffer.
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     // If the viewport dimensions are not set, nothing will be displayed.
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-    // Set clear color to black, fully opaque.
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
     // Enable depth testing.
     gl.enable(gl.DEPTH_TEST);
     // Near things obscure far things.
     gl.depthFunc(gl.LEQUAL);
-    // Clear the color as well as the depth buffer.
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     return gl;
   }
